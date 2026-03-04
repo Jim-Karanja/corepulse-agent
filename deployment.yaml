@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: corepulse-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: corepulse
+  template:
+    metadata:
+      labels:
+        app: corepulse
+    spec:
+      serviceAccountName: corepulse-sa
+      hostNetwork: true 
+      containers:
+      - name: agent
+        image: docker.io/consolejim/corepulse:v3 # Pointing to your new multi-LLM build
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true 
+        env:
+        # --- LLM CONFIGURATION ---
+        - name: MODEL_PROVIDER
+          value: "openai" # Change to 'anthropic', 'gemini', or 'ollama' as needed
+        
+        # --- API KEYS (Mapped from your single Secret) ---
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-auth
+              key: OPENAI_API_KEY
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-auth
+              key: ANTHROPIC_API_KEY
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-agent-auth
+              key: GEMINI_API_KEY
+              
+        # --- OLLAMA / LOCAL CONFIG ---
+        - name: OLLAMA_BASE_URL
+          value: "http://ollama-service:11434/v1"
+
+        volumeMounts:
+        - mountPath: /host/dev
+          name: device-mount
+        - mountPath: /host/var/log
+          name: log-mount
+      volumes:
+      - name: device-mount
+        hostPath:
+          path: /dev
+      - name: log-mount
+        hostPath:
+          path: /var/log

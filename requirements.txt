@@ -1,0 +1,7 @@
+pydantic-ai
+psutil
+openai
+loguru
+kubernetes
+anthropic
+google-generativeai
